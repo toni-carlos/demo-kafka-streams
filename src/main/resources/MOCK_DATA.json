@@ -1,0 +1,6 @@
+[{"anonymous_id": 1, "action": "login", "event_timestamp": "1697504400", "event_datetime": "2023-10-17 01:00:00"},
+  {"anonymous_id": 1, "action": "click_product", "event_timestamp": "1697504520", "event_datetime": "2023-10-17 01:02:00"},
+  {"anonymous_id": 1, "action": "product_detail", "event_timestamp": "1697504522", "event_datetime": "2023-10-17 01:02:02"},
+  {"anonymous_id": 1, "action": "add_card", "event_timestamp": "1697504700000", "event_datetime": "2023-10-17 01:05:00"},
+  {"anonymous_id": 2, "action": "login", "event_timestamp": "1697504400", "event_datetime": "2023-10-17 01:00:00"},
+  {"anonymous_id": 2, "action": "click_product", "event_timestamp": "1697508000", "event_datetime": "2023-10-17 02:00:00"}]
