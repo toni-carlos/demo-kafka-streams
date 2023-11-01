@@ -73,7 +73,7 @@ public class KafkaStreamer {
 
         builder.stream(
                 this.inputTopic, Consumed.with(configKeySerde, configValueSerde)
-        ).filter(    // Filter empty messages due to json encoding error
+        ).filter(
                 (key, value) -> streamValidator.isValid((UserEventsKey) key, (UserEventsValue) value)
         ).map(
                 (key, value) -> enrichedEvent.enrich((UserEventsKey) key, (UserEventsValue) value)

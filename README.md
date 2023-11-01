@@ -1,20 +1,52 @@
-# Kafka Streams Session
+# Kafka Streams Session Creator
 
-Essa aplicação é um exemplo de como podemos usar o Kafka Streams para criar aplicação statefull usando KTable para recuperar
-o valor mais recente da chave enviada para o tópico de changelog. Essa aplicação cria um atributo 
-sessionID para cada evento de interação do usuário na loja fake-compreja durante o período de janela de 30 minutos de um evento para o outro.
-Ou seja, caso o evento atual tenha um intervalo de tempo maior que 30 minutos do anterior, então é criado para o usuário um novo SessionID, 
-caracterizando tempo de inatividade na loja fake-compreja.
+This application is an example of how we can use Kafka Streams to create stateful application using KTable to retrieve
+The most recent value of the key sent to the changelog topic. The application enriches the user interaction event with
+a new attribute named session_id. The session_id value is calculated based on the generation time interval of the
+event(event_timestamp) between the current event and previous event. If the interval between the current and previous event is
+less than 30 minutes, then the same session_id as the previous event is assigned. Otherwise a new session_id is created,
+characterizing downtime greater than 30 minutes.
+
+Example:
+
+1 - The user accesses the website and login in to access their account. This action generates an event for the user_events topic:
+
+{"anonymous_id": 1, "action": "login", "event_timestamp": "1697504400", "event_datetime": "2023-10-17 01:00:00"}
+
+2 - Since it is the user's first event, the application creates a new session_id for the event:
+
+{"anonymous_id": 1, "action": "login", "event_timestamp": "1697504400", "event_datetime": "2023-10-17 01:00:00", "session_id": "12345"}
+
+3 - After 2 minutes the user clicks on a product, generating an event:
+
+{"anonymous_id": 1, "action": "click_product", "event_timestamp": "1697504520", "event_datetime": "2023-10-17 01:02:00"}
+
+4 - The application identifies that the difference in event generation time between the current and previous events is less than 30 minutes
+and assigns the same session_id as the previous event:
+
+{"anonymous_id": 1, "action": "click_product", "event_timestamp": "1697504520", "event_datetime": "2023-10-17 01:02:00", "session_id": "12345"}
+
+5 - After 58 minutes the user clicks on another product, generating an event:
+
+{"anonymous_id": 1, "action": "click_product", "event_timestamp": "1697508000", "event_datetime": "2023-10-17 02:00:00"}]
+
+4 - The application identifies that the difference in event generation time between the current and the previous one is greater than 30 minutes and creates
+a new session_id for the event:
+
+{"anonymous_id": 1, "action": "click_product", "event_timestamp": "1697508000", "event_datetime": "2023-10-17 02:00:00", "session_id": "678910"}
+
 
 ## Application Diagram
 Here is a simple diagram for this application:
+
 ![Application Diagram](doc/diagrama-aplicacao.png)
 
-A aplicação ler eventos do tópico de entrada `user-events`, cria o sessionID para o usuário e envia cada evento para 
+A aplicação ler eventos do tópico de entrada `user-events`, cria o sessio_id para o usuário e envia cada evento para 
 o tópico de saída `user-sessions`.
 
 ## Requirements
 * Docker + Docker-Compose: We will use it to start broker, schema registry and zookeeper.
+* Gradle 7.4 +
 * Java 11
 * An IDE like Intellij IDEA
 * 
@@ -27,15 +59,15 @@ We need to start the services Broker, schema registry and zookeeper. For that we
 some utility commands were created to help create these services:
 
 ```shell
-make start_containers
+make build_services
 ```
 
 ### 2. Create the input/output topics.
 
 ```shell
-make start_containers
+make create_topics
 ```
-### 3. Create Avro Schema in Schema Registry
+### 3. Create avro schema in Schema Registry
 
 ```shell
 chmod +x scripts
@@ -44,8 +76,16 @@ make create_schemas
 
 ### 4. Write some input data to the source topics
 
-write input data using the example found in the producer-user-events-for-sessionizer branch. Follow the steps in the readme to run the project.
+#### 4.1. Clone Repository
 
+- Clone this repo to your local machine using `https://github.com/toni-carlos/demo-kafka-producer.git`
+- git checkout producer-user-event
+
+#### 4.2. Run event producer
+
+```shell
+gradle build run
+```
 
 ### 5. Validate that data was sent to the source topic.
 
@@ -54,7 +94,8 @@ chmod +x scripts
 make consumer_topic TOPIC=user-events
 ```
 
-### 6. Now let's run the Sessionizer application
+### 6. Now let's run the application
+
 ```shell
 gradle build run
 ```
@@ -68,13 +109,19 @@ gradle test
 
 ![Topology](doc/topology_sessionizer.png)
 
-1️⃣ **Filter** operation to map 1 record into many. In our case, every sentences is mapped into multiple records: one for each word in the sentence. Also the case is lowered to make the process case-insensitive.
+1️⃣ **Filter** validates whether the event is valid.
 
-2️⃣ **Map** stream selecting a grouping key. In our case, the word. This will always return grouped stream, prepared to be aggregated. It will also trigger an operation called **repartition**. We will learn more about this later.
+2️⃣ **Map** Converts key and value to avro object of type GenericRecord.
 
-3️⃣ **Left Join** every appearance of the key in the stream. This will be stored in a **data store**.
+3️⃣ **Left Join** Retrieve data from the previous event by left joining the changelog table. This is necessary to calculate the session id of each event.
 
-4️⃣ **To** Finally, we stream the results into the topic `user-sessions`. We can stream a table using the method `toStream`, which will stream the latest value that was stored for a given key, everytime that key is updated.
+4️⃣ **To** Finally, we stream the results into the topic `user-sessions`.
+
+## Clean services created to run the demo
+
+```shell
+make clean_services
+```
 
 
 

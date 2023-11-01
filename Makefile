@@ -4,7 +4,7 @@ create_schemas:
 list_schemas:
 	@curl -i -X GET http://localhost:8081/subjects
 
-clean_service:
+clean_services:
 	@docker-compose down --rmi all
 
 clean_app:
@@ -15,7 +15,7 @@ build_app:
 	@docker build -t java_app .
 	@docker run -it --name java_app java_app
 
-start_containers:
+build_services:
 	@docker-compose up -d
 
 create_topics:

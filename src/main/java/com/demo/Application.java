@@ -29,6 +29,5 @@ class Application implements CommandLineRunner {
         kafkaStreamer.start();
         LOGGER.info("------------------------------------ Application Finished !! ---------------------------------");
     }
-    //org.apache.kafka.common.serialization.
 }
 

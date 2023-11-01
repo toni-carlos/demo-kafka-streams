@@ -14,7 +14,6 @@ public class Sessionizer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaStreamer.class);
     private static final long SESSION_WINDOW = TimeUnit.MINUTES.toMillis(30);
-    private static final String PREFIX_SOURCE_SESSION_ID = "enriched-";
 
     private static String getSessionId(UserSessionsValue event, UserSessionsValue previousEvent) {
         LOGGER.info("[GETTING SESSION ID] for event: " + event);
@@ -26,7 +25,7 @@ public class Sessionizer {
 
         if (previousEvent == null) {
             LOGGER.info("[PREVIOUS] does not exist.");
-            sessionId = PREFIX_SOURCE_SESSION_ID + UUID.randomUUID();
+            sessionId = UUID.randomUUID().toString();
         } else {
             LOGGER.info("[PREVIOUS] exist.");
 
@@ -44,7 +43,7 @@ public class Sessionizer {
 
             if ((previousEventTimestamp + SESSION_WINDOW) < eventTimestamp) {
                 LOGGER.info("[EVENT OUTSIDE] the window.");
-                sessionId = PREFIX_SOURCE_SESSION_ID + UUID.randomUUID();
+                sessionId = UUID.randomUUID().toString();
             } else {
                 LOGGER.info("[EVENT INSIDE] the window.");
                 sessionId = previousEvent.getSessionId().toString();
